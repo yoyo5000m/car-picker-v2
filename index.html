@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>NFS Payback — Car Picker</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f5a623">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Car Picker">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=Barlow:wght@400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0a0a0e;
+    --surface:  #111118;
+    --border:   #1e1e2e;
+    --accent:   #f5a623;
+    --accent2:  #e05c1a;
+    --dim:      #4a4a60;
+    --text:     #d8d8e8;
+    --white:    #f0f0f8;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    padding-top: max(2rem, env(safe-area-inset-top));
+    padding-bottom: max(2rem, env(safe-area-inset-bottom));
+    gap: 0;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      repeating-linear-gradient(
+        180deg,
+        transparent 0px,
+        transparent 60px,
+        rgba(245,166,35,0.04) 60px,
+        rgba(245,166,35,0.04) 62px
+      );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .header { text-align: center; }
+  .eyebrow {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.4rem;
+  }
+  h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(2.4rem, 8vw, 3.6rem);
+    font-weight: 900;
+    line-height: 0.92;
+    text-transform: uppercase;
+    color: var(--white);
+    letter-spacing: -0.01em;
+  }
+  h1 span { color: var(--accent); display: block; }
+
+  .card {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1rem;
+    transition: border-color 0.2s;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--accent), var(--accent2));
+  }
+
+  .car-class {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 2px;
+    font-weight: 700;
+    display: inline-block;
+    width: fit-content;
+  }
+
+  .car-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(2rem, 7vw, 3rem);
+    font-weight: 900;
+    text-transform: uppercase;
+    line-height: 0.95;
+    color: var(--white);
+    letter-spacing: -0.01em;
+  }
+
+  .car-tip {
+    font-size: 0.85rem;
+    color: var(--dim);
+    line-height: 1.5;
+    border-top: 1px solid var(--border);
+    padding-top: 0.8rem;
+    margin-top: 0.2rem;
+  }
+  .car-tip strong { color: var(--accent); font-weight: 600; }
+
+  .placeholder {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.1rem;
+    color: var(--dim);
+    text-align: center;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  .maxed-badge {
+    font-size: 0.7rem;
+    color: var(--accent2);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 600;
+    opacity: 0.8;
+  }
+
+  .btn-row {
+    width: 100%;
+    display: flex;
+    gap: 0.6rem;
+  }
+  .roll-btn {
+    flex: 1;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    border: none;
+    border-radius: 3px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #0a0a0e;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .roll-btn:active { transform: scale(0.98); opacity: 0.9; }
+
+  .reset-btn {
+    padding: 1rem 1.4rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: var(--dim);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .reset-btn:active { transform: scale(0.97); }
+
+  .toggles {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .toggle-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 0.2rem;
+    font-weight: 600;
+  }
+  .toggle-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .toggle-chip {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 5px 12px;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--dim);
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .toggle-chip.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(245,166,35,0.08);
+  }
+
+  footer {
+    font-size: 0.65rem;
+    color: var(--dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.5;
+  }
+
+  .class-race    { background: rgba(80,140,255,0.15); color: #7aa8ff; }
+  .class-drag    { background: rgba(255,80,80,0.15);  color: #ff7a7a; }
+  .class-offroad { background: rgba(80,200,100,0.12); color: #72e087; }
+  .class-drift   { background: rgba(200,80,255,0.12); color: #d87aff; }
+  .class-runner  { background: rgba(255,180,30,0.12); color: #f5c842; }
+
+  @keyframes slam {
+    0%   { transform: translateX(-4px); }
+    25%  { transform: translateX(4px); }
+    50%  { transform: translateX(-2px); }
+    75%  { transform: translateX(2px); }
+    100% { transform: translateX(0); }
+  }
+  .card.animate { animation: slam 0.2s ease; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <p class="eyebrow">Need for Speed Payback</p>
+    <h1>Spin the<span>Garage</span></h1>
+  </div>
+
+  <div class="card" id="card">
+    <p class="placeholder">Hit the button — get a car</p>
+  </div>
+
+  <div class="btn-row">
+    <button class="roll-btn" id="rollBtn">Roll</button>
+    <button class="reset-btn" id="resetBtn" title="Reset">↺</button>
+  </div>
+
+  <div class="toggles">
+    <p class="toggle-label">Exclude classes</p>
+    <div class="toggle-row" id="toggleRow"></div>
+  </div>
+
+  <footer>v1.0.0 — Payback Edition</footer>
+</div>
+
+<script>
+const CARS = [
+  { name: "Porsche 911 GT3 RS",       class: "Race",     tip: "Top Race pick. <strong>Chidori</strong> cards for Speed — same setup you'd run on the Cayman GT4." },
+  { name: "Lamborghini Huracán",       class: "Race",     tip: "Ties with the GT3 RS at max. <strong>Chidori</strong> for Speed, keep Handling tight." },
+  { name: "Nissan GT-R",              class: "Race",     tip: "Solid Race workhorse. <strong>Chidori</strong> cards, prioritise Speed then Handling." },
+  { name: "Ferrari 458 Italia",        class: "Race",     tip: "Great cornering base. <strong>Chidori</strong> Speed cards make it feel planted at 300+." },
+  { name: "McLaren 570S",             class: "Race",     tip: "High top speed ceiling. Stack <strong>Chidori</strong> Speed, let the car do the work." },
+  { name: "Mercedes-AMG GT S",        class: "Race",     tip: "Brute power over finesse. <strong>Chidori</strong> Speed to exploit the high power stat." },
+  { name: "BMW M4",                   class: "Race",     tip: "Balanced Race entry. <strong>Chidori</strong> preferred; Nextech works if Chidori won't drop." },
+  { name: "Dodge Challenger SRT8",    class: "Drag",     tip: "Classic Drag beast. <strong>Outlaw → Chidori → Nextech</strong> brand priority." },
+  { name: "Ford Mustang GT (2015)",   class: "Drag",     tip: "Lightweight with huge launch. Stack <strong>Outlaw</strong> Speed cards hard." },
+  { name: "Chevrolet Camaro SS",      class: "Drag",     tip: "Good power delivery. <strong>Outlaw</strong> for top Speed, then fill with <strong>Chidori</strong>." },
+  { name: "Lamborghini Murciélago",   class: "Drag",     tip: "AWD means traction is free — go all-in on <strong>Outlaw</strong> Speed cards." },
+  { name: "McLaren P1",               class: "Drag",     tip: "Highest Drag ceiling. <strong>Outlaw</strong> Speed stack, no debate." },
+  { name: "Dodge Charger SRT Hellcat",class: "Drag",     tip: "Wide body + huge torque. <strong>Outlaw → Chidori</strong> for Speed, don't sleep on Acceleration." },
+  { name: "Koenigsegg Regera",        class: "Drag",     tip: "Race build uses Chidori — in Drag spec swap to <strong>Outlaw</strong> Speed for the top-end pull." },
+  { name: "Ford Raptor",              class: "Off-Road", tip: "King of Off-Road. Max <strong>Ground Clearance + Acceleration</strong> first, then Speed." },
+  { name: "Chevrolet Colorado ZR2",   class: "Off-Road", tip: "Great all-terrain grip. Priority: <strong>Clearance → Accel → Speed</strong>." },
+  { name: "Jeep Trailcat",            class: "Off-Road", tip: "Drift-friendly Off-Roader. Stack Acceleration cards — snappy on dirt." },
+  { name: "Hummer H1",               class: "Off-Road", tip: "Slow starter, insane top grip. Patience with Speed cards pays off at max." },
+  { name: "VW Baja Bug",             class: "Off-Road", tip: "Lightweight champ — like your Beetle but built for dirt. Acceleration focus." },
+  { name: "Land Rover Defender",      class: "Off-Road", tip: "Precision Off-Road tool. <strong>Acceleration + Nitrous</strong> for short technical sections." },
+  { name: "Porsche Cayenne Turbo S",  class: "Off-Road", tip: "AWD base helps a lot. Speed cards first once Clearance is sorted." },
+  { name: "Mazda RX-7 (FC)",         class: "Drift",    tip: "Lightweight, rotary scream. <strong>Handling + Nitrous</strong> — control the rotation, not the speed." },
+  { name: "Nissan 180SX",            class: "Drift",    tip: "Classic drift sled. <strong>Handling</strong> cards to sharpen the angle, Nitrous for sustain." },
+  { name: "Toyota GT86",             class: "Drift",    tip: "Neutral balance out the box. Stack <strong>Handling</strong>, let Speed come last." },
+  { name: "Chevrolet Camaro SS",     class: "Drift",    tip: "Bulkier than the Corvette but fun. Card logic: <strong>Handling → Nitrous</strong>." },
+  { name: "BMW M5 (E60)",            class: "Drift",    tip: "Big power, tail-happy by nature. <strong>Handling</strong> to tame it, Nitrous for long walls." },
+  { name: "Mitsubishi Lancer Evo X", class: "Runner",   tip: "AWD helps you hold lines. <strong>Speed + Nitrous</strong> for straights, Handling to dodge cops." },
+  { name: "Volkswagen Golf GTI Mk7",  class: "Runner",   tip: "Small, nimble — like your Beetle but more top end. Speed cards, then Nitrous." },
+  { name: "Mini Cooper S",            class: "Runner",   tip: "Tiny and slippery. Pure <strong>Speed + Acceleration</strong> — hard to catch." },
+  { name: "Subaru BRZ",              class: "Runner",   tip: "Light chassis, great for tight city runs. <strong>Acceleration + Speed</strong>, Nitrous for escape." },
+  { name: "Nissan Skyline GT-R R34",  class: "Runner",   tip: "Iconic. AWD + wide power band — <strong>Speed → Nitrous → Acceleration</strong> stack." },
+  { name: "Audi RS7",                class: "Runner",   tip: "Fast, stable, hard to flip. Max Speed cards, Nitrous as finisher." },
+  { name: "Porsche Panamera Turbo S", class: "Runner",   tip: "Sleeper Runner. <strong>Speed</strong> first — once maxed it outruns most pursuits comfortably." },
+];
+
+const MAXED = ["VW Beetle", "Acura NSX", "1965 Mustang", "Porsche Cayman GT4", "Corvette"];
+const CLASSES = ["Race","Drag","Off-Road","Drift","Runner"];
+const CLASS_STYLE = {
+  "Race": "class-race", "Drag": "class-drag", "Off-Road": "class-offroad",
+  "Drift": "class-drift", "Runner": "class-runner"
+};
+
+let excluded = new Set();
+let lastIdx = -1;
+
+const toggleRow = document.getElementById('toggleRow');
+CLASSES.forEach(cls => {
+  const btn = document.createElement('button');
+  btn.className = 'toggle-chip';
+  btn.textContent = cls;
+  btn.addEventListener('click', () => {
+    if (excluded.has(cls)) { excluded.delete(cls); btn.classList.remove('active'); }
+    else { excluded.add(cls); btn.classList.add('active'); }
+  });
+  toggleRow.appendChild(btn);
+});
+
+document.getElementById('rollBtn').addEventListener('click', () => {
+  const pool = CARS.filter(c => !excluded.has(c.class));
+  if (!pool.length) {
+    document.getElementById('card').innerHTML = `<p class="placeholder">No classes available — uncheck some filters</p>`;
+    return;
+  }
+  let idx;
+  do { idx = Math.floor(Math.random() * pool.length); }
+  while (pool.length > 1 && idx === lastIdx);
+  lastIdx = idx;
+  renderCard(pool[idx]);
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  excluded.clear();
+  document.querySelectorAll('.toggle-chip').forEach(c => c.classList.remove('active'));
+  lastIdx = -1;
+  const card = document.getElementById('card');
+  card.classList.remove('animate');
+  card.innerHTML = `<p class="placeholder">Hit the button — get a car</p>`;
+});
+
+function renderCard(car) {
+  const card = document.getElementById('card');
+  card.classList.remove('animate');
+  void card.offsetWidth;
+  card.classList.add('animate');
+  const isMaxed = MAXED.some(n => car.name.includes(n) || n.includes(car.name));
+  card.innerHTML = `
+    <span class="car-class ${CLASS_STYLE[car.class]}">${car.class}</span>
+    <div class="car-name">${car.name}</div>
+    ${isMaxed ? `<span class="maxed-badge">⚠ Already in your maxed garage — roll again?</span>` : ''}
+    <p class="car-tip">${car.tip}</p>
+  `;
+}
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
